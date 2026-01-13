@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+shopt -s nullglob
+
+echo "Current directory: $(pwd)"
+
+files=(*)
+count=${#files[@]}
+
+echo "Found $count files:"
+printf ' - %s\n' "${files[@]}"
+
+echo
+read -p "Are you sure you want to rename ALL these files? (y/n): " ans
+[[ "$ans" != "y" ]] && echo "Cancelled." && exit 0
+
+echo "Renaming..."
+
+n=0
+
+for old in "${files[@]}"; do
+    name="${old%.*}"
+    ext="${old##*.}"
+
+    # Ignore files whose name is already numeric (e.g. 1.mp4, 42.png)
+    if [[ "$name" =~ ^[0-9]+$ ]]; then
+        echo "Skipping numeric file: $old"
+        continue
+    fi
+
+    # Find next free number
+    while [[ -e "$n.$ext" ]]; do
+        ((n++))
+    done
+
+    new="$n.$ext"
+    mv -- "$old" "$new"
+    echo "$old -> $new"
+
+    ((n++))
+done
+
+echo "Done."
+
